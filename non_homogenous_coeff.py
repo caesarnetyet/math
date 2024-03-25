@@ -1,107 +1,65 @@
 import sympy as sp
 
-print("Bienvenido al programa de resolución de ecuaciones diferenciales.")
-print("Este programa resuelve ecuaciones diferenciales de la forma: y'' + p(x)y' + q(x)y = f(x)")
+
+def solve_second_order_non_homogeneous(coef_y_prime, coef_independent, coef_x_squared, coef_x, term_independent):
+    steps = []
+    x = sp.symbols('x')
+
+    a = 1  # Coefficient of y''
+    b = coef_y_prime
+    c = coef_independent
+    d = coef_x_squared
+    e = coef_x
+    f = term_independent
+
+    steps.append(f"Ecuación original: y'' + {b}y' + {c}y = {d}x² + {e}x + {f}")
+
+    characteristic_eq = a * x ** 2 + b * x + c
+    roots = sp.solve(characteristic_eq, x)
+
+    if not roots:
+        steps.append("No se encontraron raíces para la solución.")
+        return steps
+
+    # Assume a particular solution of the form Yp = Ax^2 + Bx + C
+    A, B, C = sp.symbols('A B C')
+    Yp = A * x ** 2 + B * x + C
+    Yp_prime = sp.diff(Yp, x)
+    Yp_double_prime = sp.diff(Yp_prime, x)
+
+    equation = a * Yp_double_prime + b * Yp_prime + c * Yp - (d * x ** 2 + e * x + f)
+
+    eqs = [sp.Eq(equation.coeff(x, i), 0) for i in range(3)]
+    sol = sp.solve(eqs, (A, B, C))
+
+    if not sol:
+        steps.append("No se encontraron soluciones para:  A, B, C.")
+        return steps
+
+    # Display the results
+    A_value, B_value, C_value = sol[A], sol[B], sol[C]
+    steps.append(f"Soluciones para A, B, C: A = {A_value}, B = {B_value}, C = {C_value}")
+
+    # Combine the complementary and particular solutions
+    complementary_solution = f"C1*exp({roots[0]}*x) + C2*exp({roots[1]}*x)"
+    particular_solution = f"({A_value})*x^2 + ({B_value})*x + {C_value}"
+    general_solution = f"{complementary_solution} + {particular_solution}"
+    steps.append(f"Solución general: y(x) = {general_solution}")
+
+    return steps
 
 
-def validar_numero(entrada):
-    while True:
-        valor = input(entrada)
-        try:
-            valor_numerico = int(valor)
-            return valor_numerico
-        except ValueError:
-            print("Error: Ingresa solo números enteros.")
+if __name__ == "__main__":
+    coef_y_prime = 1
+    coef_independent = 0
+    coef_x_squared = 2
+    coef_x = 7
+    term_independent = 4
 
-#coeficiente_ydoble = validar_numero("Ingresa el coeficiente de y'' (deja en blanco si es 1): ")
-coeficiente_yprima = validar_numero("Ingresa el coeficiente de y' (deja en blanco si es 0): ")
-coeficiente_independiente = validar_numero("Ingresa el coeficiente independiente (deja en blanco si es 0): ")
-coeficiente_xcuadrado = validar_numero("Ingresa el coeficiente de x² (deja en blanco si es 0): ")
-coeficiente_x = validar_numero("Ingresa el coeficiente de x (deja en blanco si es 0): ")
-termino_independiente = validar_numero("Ingresa el término independiente (deja en blanco si es 0): ")
-
-# Definimos las variables y los coeficientes de la ecuación cuadrática
-x = sp.Symbol('x')
-a = 1
-#primer termino
-b = coeficiente_yprima
-#segundo termino
-c = coeficiente_independiente
-#================================
-d = coeficiente_xcuadrado
-
-e = coeficiente_x
-
-f = termino_independiente
-
-
-print(f"ECUACION")
-print(f"y'' + {b}y' + {c} = {d}x² + {e}x + {f}")
-# Creamos la ecuación cuadrática
-ecuacion = a*x**2 + b*x + c
-
-# Calculamos las raíces de la ecuación cuadrática
-raices = sp.solve(ecuacion, x)
-
-# Mostramos las raíces calculadas y las guardamos en variables separadas
-print("Factorizacion:")
-x1 = raices[0].evalf()
-x2 = raices[1].evalf()
-
-print(f"x1 = {x1}")
-print(f"x2 = {x2}")
-##############################################################################################################
-# Definimos las variables y las expresiones generales
-x, A, B, C = sp.symbols('x A B C')
-Yp = A*x**2 + B*x + C
-Yp_prime = 2*A*x + B
-Yp_double_prime = 2*A
-
-# Definimos los coeficientes que acompañan a las expresiones generales
-coef_yp_double_prime = 1
-coef_yp_prime = b
-coef_y = c
-
-# Sustituimos las expresiones generales en la ecuación original
-ecuacion = coef_yp_double_prime*Yp_double_prime + coef_yp_prime*Yp_prime + coef_y*Yp
-
-# Mostramos la ecuación resultante
-print("La ecuación resultante es:")
-print(sp.latex(ecuacion))
-
-
-# Separamos los términos que contienen x^2 y despejamos A
-termino_x2 = ecuacion.coeff(x**2)
-ecuacion_simplificada = sp.Eq(termino_x2, d)  # Igualamos el término a 2
-A_valor = sp.solve(ecuacion_simplificada, A)[0]
-
-# Mostramos los resultados
-print("\nX² ->:")
-print(A_valor)
-
-
-
-
-
-# Separamos los términos que contienen x y despejamos B
-termino_x = ecuacion.coeff(x)
-ecuacion_simplificada_x = sp.Eq(termino_x, e)  # Igualamos el término a 7
-B_valor = sp.solve(ecuacion_simplificada_x.subs(A, A_valor), B)[0]
-
-# Mostramos los resultados
-print("\nX ->")
-print(B_valor)
-
-
-# Separamos el término independiente y despejamos C
-termino_independiente = ecuacion - termino_x2*x**2 - termino_x*x
-ecuacion_simplificada_ind = sp.Eq(termino_independiente, f)  # Igualamos el término al valor independiente
-C_valor = sp.solve(ecuacion_simplificada_ind.subs({A: A_valor, B: B_valor}), C)[0]
-
-
-print("\nInd ->")
-print(C_valor)
-
-
-print("\nRESULTADO")
-print(f"C₁e{x1}ˣ + C₂e{x2}ˣ + ({A_valor})X² + ({B_valor})X + {C_valor}")
+    detailed_steps = solve_second_order_non_homogeneous(
+        coef_y_prime,
+        coef_independent,
+        coef_x_squared, coef_x,
+        term_independent)
+    for step in detailed_steps:
+        print(step)
